@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>예약금 계산기</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --background:         #ffffff;        /* gray_0 / bg_100 */
+      --foreground:         #20232B;        /* gray_700 */
+      --card:               #ffffff;        /* bg_100 */
+      --primary:            #227EFF;        /* primary_300 */
+      --primary-hover:      #0D51FF;        /* primary_400 */
+      --primary-foreground: #ffffff;        /* gray_0 */
+      --secondary:          #F9F9FB;        /* bg_200 */
+      --muted-foreground:   #606268;        /* gray_500 */
+      --border:             #DFE0E1;        /* gray_100 */
+      --ring:               #9FA1A4;        /* gray_300 */
+      --destructive:        #F03E3E;        /* red_300 */
+      --radius-xl:  0.75rem;
+      --radius-lg:  0.5rem;
+      --radius-md:  0.375rem;
+      --radius-sm:  0.25rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+      background: var(--secondary);
+      min-height: 100svh;
+      color: var(--foreground);
+      padding: 40px 24px 80px;
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "tnum";
+    }
+
+    .page {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Floating Bar ── */
+    #floating-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 24px;
+      height: 48px;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.4;
+      transform: translateY(-100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #floating-bar.visible { transform: translateY(0); }
+
+    .float-amount {
+      font-weight: 700;
+      color: var(--primary-foreground);
+    }
+    .float-sub {
+      color: rgba(250,250,250,0.6);
+      font-size: 0.8125rem;
+    }
+    .float-sub strong { color: var(--primary-foreground); font-weight: 600; }
+
+    /* body padding 보정 — floating bar가 나타날 때 */
+    body.bar-visible { padding-top: 88px; }
+
+    /* ── Slider Onboarding ── */
+    @keyframes thumb-pulse {
+      0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 0 0 0 rgba(34,126,255,0.45); }
+      50%      { box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 0 0 10px rgba(34,126,255,0); }
+    }
+    .slider.pulse::-webkit-slider-thumb {
+      animation: thumb-pulse 1.6s ease-in-out infinite;
+    }
+    .slider.pulse::-moz-range-thumb {
+      animation: thumb-pulse 1.6s ease-in-out infinite;
+    }
+
+    /* Thumb-following Tooltip */
+    .slider-wrap {
+      position: relative;
+      width: 100%;
+    }
+    @keyframes tooltip-bob {
+      0%, 100% { translate: 0 0; }
+      50%      { translate: 0 -3px; }
+    }
+    .thumb-tooltip {
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 0;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      box-shadow: 0 6px 16px rgba(34, 126, 255, 0.32);
+      pointer-events: none;
+      z-index: 5;
+      animation: tooltip-bob 1.6s ease-in-out infinite;
+      transition: opacity 0.3s ease;
+    }
+    .thumb-tooltip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border: 5px solid transparent;
+      border-top-color: var(--primary);
+    }
+    .thumb-tooltip.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Hero Header ── */
+    .page-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px 4px 8px;
+      text-align: center;
+      align-items: center;
+    }
+
+    .page-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+    .page-eyebrow svg { width: 12px; height: 12px; }
+
+    .page-hero {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--foreground);
+      line-height: 1.35;
+    }
+
+    .hl {
+      background: linear-gradient(180deg, transparent 62%, #ffe978 62%);
+      padding: 0 4px;
+      color: var(--foreground);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .page-stats {
+      font-size: 0.9375rem;
+      color: var(--muted-foreground);
+      line-height: 1.6;
+    }
+    .page-stats strong { color: var(--foreground); font-weight: 600; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .card-header {
+      padding: 24px 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--foreground);
+      letter-spacing: -0.015em;
+    }
+    .card-description {
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+      line-height: 1.5;
+    }
+    .card-content {
+      padding: 20px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Slider Field (Sub-card) ── */
+    .slider-field {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--secondary);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px 14px;
+    }
+    .slider-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .slider-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+    .slider-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--foreground);
+      font-feature-settings: "tnum";
+      letter-spacing: -0.02em;
+    }
+    .slider-value .unit {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+    .slider-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      font-feature-settings: "tnum";
+    }
+
+    /* ── Range Input ── */
+    .slider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+      height: 20px;
+    }
+    .slider:focus { outline: none; }
+
+    .slider::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: linear-gradient(
+        to right,
+        var(--primary) 0%,
+        var(--primary) var(--progress, 0%),
+        #DFE0E1 var(--progress, 0%),
+        #DFE0E1 100%
+      );
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--background);
+      border: 2px solid var(--primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      margin-top: -6px;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .slider:hover::-webkit-slider-thumb { transform: scale(1.1); }
+    .slider:focus-visible::-webkit-slider-thumb {
+      box-shadow: 0 0 0 4px rgba(163,163,163,0.4);
+    }
+
+    .slider::-moz-range-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: #DFE0E1;
+    }
+    .slider::-moz-range-progress {
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--primary);
+    }
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--background);
+      border: 2px solid var(--primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+    .slider:hover::-moz-range-thumb { transform: scale(1.1); }
+
+    /* ── Fixed Info ── */
+    .fixed-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--secondary);
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+    }
+    .fixed-info-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted-foreground);
+    }
+    .fixed-info-label svg { width: 14px; height: 14px; }
+    .fixed-info-value { font-weight: 600; color: var(--foreground); }
+
+    /* ── Defense Card (Tinted) ── */
+    .defense-card {
+      position: relative;
+      background:
+        radial-gradient(120% 80% at 100% 0%, rgba(34,126,255,0.10) 0%, transparent 60%),
+        rgba(34,126,255,0.06);
+      border: 1px solid rgba(34,126,255,0.18);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px 20px;
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      column-gap: 16px;
+      row-gap: 16px;
+      overflow: hidden;
+    }
+    .defense-icon {
+      grid-row: 1;
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(34,126,255,0.32);
+    }
+    .defense-icon svg { width: 26px; height: 26px; }
+    .defense-body {
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .defense-eyebrow {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      letter-spacing: -0.01em;
+    }
+    .defense-amount {
+      display: flex;
+      align-items: baseline;
+      font-feature-settings: "tnum";
+      line-height: 1.05;
+      margin: 2px 0 4px;
+    }
+    .amount-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.035em;
+    }
+    .amount-unit {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-left: 4px;
+    }
+    .defense-formula {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      letter-spacing: -0.005em;
+    }
+    .defense-formula strong { color: var(--foreground); font-weight: 600; }
+    .defense-annual {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(34,126,255,0.14);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--foreground);
+      letter-spacing: -0.01em;
+    }
+    .defense-annual svg { width: 16px; height: 16px; color: var(--primary); flex: none; }
+    .defense-annual strong { color: var(--primary); font-weight: 700; }
+
+    /* ── Action Section ── */
+    .action-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── CTA ── */
+    .cta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      gap: 8px;
+      white-space: nowrap;
+      transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-cta {
+      height: 60px;
+      padding: 0 40px;
+      min-width: 280px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-radius: 9999px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      box-shadow: 0 8px 24px rgba(34,126,255,0.25);
+    }
+    .btn-cta:hover { background: var(--primary-hover); opacity: 1; }
+    .btn-cta svg { width: 16px; height: 16px; }
+    .cta-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+    .cta-meta svg { width: 12px; height: 12px; }
+
+    /* ── Footer ── */
+    .page-footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      padding: 4px 0;
+      line-height: 1.6;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      body { padding: 24px 16px 48px; }
+      body.bar-visible { padding-top: 72px; }
+      .page-hero { font-size: 1.625rem; line-height: 1.4; }
+      .action-section { padding: 24px 20px; }
+      .btn-cta { min-width: unset; width: 100%; }
+      #floating-bar { font-size: 0.8125rem; }
+      .float-sub { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Summary Bar -->
+  <div id="floating-bar" role="status" aria-live="polite">
+    예약금만 받아도 매월
+    <span class="float-amount"><span id="float-amount">800,000</span>원</span>을
+    지킬 수 있어요
+    <span class="float-sub">(1년이면 약 <strong id="float-annual">9,600,000</strong>원)</span>
+  </div>
+
+  <main class="page">
+
+    <!-- Hero Header -->
+    <header class="page-header" id="page-header">
+      <span class="page-eyebrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="2" width="16" height="20" rx="2"/>
+          <line x1="8" y1="6" x2="16" y2="6"/>
+          <line x1="8" y1="10" x2="10" y2="10"/>
+          <line x1="14" y1="10" x2="16" y2="10"/>
+          <line x1="8" y1="14" x2="10" y2="14"/>
+          <line x1="14" y1="14" x2="16" y2="14"/>
+        </svg>
+        예약금 계산기
+      </span>
+      <h1 class="page-hero">
+        예약금만 받아도<br />
+        매월 <span class="hl"><span id="hero-amount">800,000</span>원</span>을 지킬 수 있어요
+      </h1>
+      <p class="page-stats">
+        노쇼로 놓치던 매출, 1년이면 <strong id="hero-annual">약 9,600,000원</strong>을 지킬 수 있어요
+      </p>
+    </header>
+
+    <!-- Input Card -->
+    <section class="card">
+
+      <div class="card-header">
+        <span class="card-title">우리 샵 상황 알려 주세요</span>
+        <span class="card-description">슬라이더를 움직여 우리 샵 상황에 맞춰 보세요</span>
+      </div>
+      <div class="card-content">
+
+        <!-- 1. 한 달 총 예약 고객 수 -->
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label class="slider-label" for="s-total">한 달 총 예약 고객 수</label>
+            <span class="slider-value"><span id="v-total">100</span><span class="unit">명</span></span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" class="slider pulse" id="s-total" min="0" max="800" step="5" value="100" aria-label="한 달 총 예약 고객 수" />
+            <div class="thumb-tooltip" id="thumb-tooltip" role="note">좌우로 움직여 보세요</div>
+          </div>
+          <div class="slider-meta"><span>0명</span><span>800명</span></div>
+        </div>
+
+        <!-- 2. 실제 방문 고객 수 -->
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label class="slider-label" for="s-visit">실제 방문 고객 수</label>
+            <span class="slider-value"><span id="v-visit">80</span><span class="unit">명</span></span>
+          </div>
+          <input type="range" class="slider" id="s-visit" min="0" max="800" step="5" value="80" aria-label="실제 방문 고객 수" />
+          <div class="slider-meta"><span>0명</span><span>800명</span></div>
+        </div>
+
+        <!-- 3. 예약 평균 단가 -->
+        <div class="slider-field">
+          <div class="slider-label-row">
+            <label class="slider-label" for="s-price">예약 평균 단가</label>
+            <span class="slider-value"><span id="v-price">80,000</span><span class="unit">원</span></span>
+          </div>
+          <input type="range" class="slider" id="s-price" min="0" max="300000" step="1000" value="80000" aria-label="예약 평균 단가" />
+          <div class="slider-meta"><span>0원</span><span>300,000원</span></div>
+        </div>
+
+
+
+      </div>
+    </section>
+
+    <!-- Action Section -->
+    <section class="action-section">
+
+      <!-- 방어액 Highlight -->
+      <div class="defense-card" id="defense-card" role="status" aria-label="예약금을 통한 손실 방지액">
+        <div class="defense-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="defense-body">
+          <span class="defense-eyebrow">예약금으로 매월 지킬 수 있어요</span>
+          <div class="defense-amount">
+            <span class="amount-value" id="h-saved">800,000</span><span class="amount-unit">원</span>
+          </div>
+          <span class="defense-formula">한 달 노쇼로 놓치는 <strong id="h-loss">1,600,000</strong>원의 80%</span>
+        </div>
+        <div class="defense-annual">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          1년이면 <strong id="h-annual">약 9,600,000원</strong>을 지킬 수 있어요
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-row">
+        <button class="btn btn-cta" type="button">
+          지금 예약금 설정하기
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+          </svg>
+        </button>
+        <span class="cta-meta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          설정은 3분이면 끝나요
+        </span>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      입력하신 값으로 계산한 예상 금액이라, 실제 샵 상황에 따라 달라질 수 있어요.
+    </footer>
+
+  </main>
+
+  <script>
+    const fmt = (n) => n.toLocaleString("ko-KR");
+
+    const sTotal  = document.getElementById("s-total");
+    const sVisit  = document.getElementById("s-visit");
+    const sPrice  = document.getElementById("s-price");
+    const floatBar = document.getElementById("floating-bar");
+
+    function updateProgress(s) {
+      const min = +s.min, max = +s.max, val = +s.value;
+      const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
+      s.style.setProperty("--progress", pct + "%");
+    }
+
+    function recalc() {
+      const total  = +sTotal.value;
+
+      // 실제 방문 고객 수는 총 예약 고객 수를 초과할 수 없음
+      if (+sVisit.value > total) sVisit.value = total;
+      const visit  = +sVisit.value;
+      const price  = +sPrice.value;
+      const defend = 0.80;
+
+      // 슬라이더 값 표시
+      document.getElementById("v-total").textContent  = fmt(total);
+      document.getElementById("v-visit").textContent  = fmt(visit);
+      document.getElementById("v-price").textContent  = fmt(price);
+
+      // 계산
+      const loss  = (total - visit) * price;
+      const saved = Math.round(loss * defend);
+
+      // 하이라이트 카드
+      document.getElementById("h-loss").textContent   = fmt(loss);
+      document.getElementById("h-saved").textContent  = fmt(saved);
+      document.getElementById("h-annual").textContent = "약 " + fmt(saved * 12) + "원";
+
+      // 히어로
+      document.getElementById("hero-amount").textContent = fmt(saved);
+      document.getElementById("hero-annual").textContent = "약 " + fmt(saved * 12) + "원";
+
+      // 플로팅 바
+      document.getElementById("float-amount").textContent = fmt(saved);
+      document.getElementById("float-annual").textContent = fmt(saved * 12);
+
+      [sTotal, sVisit, sPrice].forEach(updateProgress);
+      updateTooltipPos();
+    }
+
+    // thumb 위 툴팁 위치 추적 (swing 데모 시에도 자동으로 따라감)
+    const tooltip = document.getElementById("thumb-tooltip");
+    function updateTooltipPos() {
+      const min = +sTotal.min, max = +sTotal.max, val = +sTotal.value;
+      const pct = max === min ? 0 : (val - min) / (max - min);
+      const trackW = sTotal.offsetWidth;
+      if (trackW === 0) return;
+      tooltip.style.left = ((trackW - 18) * pct + 9) + "px";
+    }
+    window.addEventListener("resize", updateTooltipPos);
+    requestAnimationFrame(updateTooltipPos);
+
+    // 플로팅 바 — hero 밖 + defense 카드 안 보일 때만 표시
+    let heroOut = false;
+    let defenseInView = false;
+
+    function syncFloatBar() {
+      const show = heroOut && !defenseInView;
+      floatBar.classList.toggle("visible", show);
+      document.body.classList.toggle("bar-visible", show);
+    }
+
+    new IntersectionObserver(([e]) => {
+      heroOut = !e.isIntersecting;
+      syncFloatBar();
+    }, { threshold: 0 }).observe(document.getElementById("page-header"));
+
+    new IntersectionObserver(([e]) => {
+      defenseInView = e.isIntersecting;
+      syncFloatBar();
+    }, { threshold: 0.1 }).observe(document.getElementById("defense-card"));
+
+    [sTotal, sVisit, sPrice].forEach(s => s.addEventListener("input", recalc));
+    recalc();
+
+    // 첫 조작 시 pulse + tooltip 동시 dismiss
+    [sTotal, sVisit, sPrice].forEach(s =>
+      s.addEventListener("input", () => {
+        sTotal.classList.remove("pulse");
+        tooltip.classList.add("hidden");
+      }, { once: true })
+    );
+
+    // 첫 슬라이더 1회 swing 데모 (sin 곡선으로 부드럽게 좌→우→원점)
+    const DEMO_START = 100;
+    const DEMO_PEAK  = 280;
+    const DEMO_DUR   = 1800;
+    let demoCancelled = false;
+
+    [sTotal, sVisit, sPrice].forEach(s =>
+      s.addEventListener("pointerdown", () => { demoCancelled = true; }, { once: true })
+    );
+
+    function runDemo(startTime) {
+      if (demoCancelled) return;
+      const elapsed = performance.now() - startTime;
+      if (elapsed >= DEMO_DUR) {
+        sTotal.value = DEMO_START;
+        recalc();
+        return;
+      }
+      const t = elapsed / DEMO_DUR;
+      const eased = Math.sin(t * Math.PI);
+      sTotal.value = Math.round(DEMO_START + (DEMO_PEAK - DEMO_START) * eased);
+      recalc();
+      requestAnimationFrame(() => runDemo(startTime));
+    }
+
+    setTimeout(() => requestAnimationFrame(() => runDemo(performance.now())), 600);
+  </script>
+</body>
+</html>
