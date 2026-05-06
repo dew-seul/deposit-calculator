@@ -108,13 +108,13 @@
     }
     .guide-close {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 28px;
-      height: 28px;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
       background: rgba(34, 126, 255, 0.10);
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -123,7 +123,7 @@
       transition: background 0.15s;
     }
     .guide-close:hover { background: rgba(34, 126, 255, 0.22); }
-    .guide-close svg { width: 14px; height: 14px; stroke-width: 3; }
+    .guide-close svg { width: 20px; height: 20px; stroke-width: 3; }
     .guide-body {
       display: flex;
       flex-direction: column;
@@ -154,6 +154,11 @@
       margin-top: 4px;
       line-height: 1.55;
     }
+
+    /* ── ? Mask / Slot Machine ── */
+    .slot-q { color: var(--ring); font-feature-settings: "tnum"; }
+    .hl .slot-q { color: var(--foreground); }
+
     /* ── Hero Header ── */
     .page-header {
       display: flex;
@@ -421,16 +426,17 @@
     .result-value.negative { color: var(--destructive); }
 
     /* ── Calc Toggle (defense-card 내부) ── */
+    .calc-section { display: block; }
     .calc-toggle {
-      grid-column: 1 / -1;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 5px;
       background: none;
       border: none;
-      border-top: 1px solid rgba(34,126,255,0.10);
-      padding: 12px 0 0;
+      border-top: 1px solid var(--border);
+      padding: 12px 0;
+      width: 100%;
       font-family: inherit;
       font-size: 0.75rem;
       font-weight: 500;
@@ -443,7 +449,6 @@
     .calc-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 
     .calc-detail {
-      grid-column: 1 / -1;
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -454,100 +459,13 @@
     .calc-detail .result-row:last-child { padding-bottom: 2px; }
 
     /* ── Highlight Card (Dark) ── */
-    .defense-card {
-      position: relative;
-      background:
-        radial-gradient(120% 80% at 100% 0%, rgba(34,126,255,0.10) 0%, transparent 60%),
-        rgba(34,126,255,0.06);
-      border: 1px solid rgba(34,126,255,0.18);
-      border-radius: var(--radius-lg);
-      padding: 22px 24px 20px;
-      display: grid;
-      grid-template-columns: 52px 1fr;
-      column-gap: 16px;
-      row-gap: 16px;
-      overflow: hidden;
-    }
-    .defense-icon {
-      grid-row: 1;
-      width: 52px; height: 52px;
-      border-radius: 14px;
-      background: var(--primary);
-      color: var(--primary-foreground);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 20px rgba(34,126,255,0.32);
-    }
-    .defense-icon svg { width: 26px; height: 26px; }
-    .defense-body {
-      grid-row: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-    }
-    .defense-eyebrow {
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: var(--muted-foreground);
-      letter-spacing: -0.01em;
-    }
-    .defense-amount {
-      display: flex;
-      align-items: baseline;
-      font-feature-settings: "tnum";
-      line-height: 1.05;
-      margin: 2px 0 4px;
-    }
-    .amount-value {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--primary);
-      letter-spacing: -0.035em;
-    }
-    .amount-unit {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin-left: 4px;
-    }
-    .defense-formula {
-      font-size: 0.75rem;
-      color: var(--muted-foreground);
-      letter-spacing: -0.005em;
-    }
-    .defense-formula strong { color: var(--foreground); font-weight: 600; }
-    .defense-annual {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.7);
-      border: 1px solid rgba(34,126,255,0.14);
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      color: var(--foreground);
-      letter-spacing: -0.01em;
-    }
-    .defense-annual svg { width: 16px; height: 16px; color: var(--primary); flex: none; }
-    .defense-annual strong { color: var(--primary); font-weight: 700; }
 
     /* ── Action Section ── */
-    .action-section {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
     /* ── CTA ── */
     .cta-row {
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      margin-top: -16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -602,7 +520,6 @@
     @media (max-width: 640px) {
       body { padding: 24px 16px 48px; }
       .page-hero { font-size: 1.625rem; line-height: 1.4; }
-      .action-section { padding: 24px 20px; }
       .btn-cta { min-width: unset; width: 100%; }
       #floating-bar { font-size: 0.8125rem; }
       .float-sub { display: none; }
@@ -636,10 +553,10 @@
       </span>
       <h1 class="page-hero">
         예약금만 도입해도<br />
-        매월 <span class="hl"><span id="hero-amount">6,400,000</span>원</span>을 지킬 수 있어요
+        매월 <span class="hl"><span id="hero-amount">6,400,000</span>원</span>을 지킬 수 있어요.
       </h1>
       <p class="page-stats">
-        연간 <strong id="hero-annual">약 76,800,000원</strong>의 노쇼 손실을 방어할 수 있어요
+        연간 <strong id="hero-annual">약 76,800,000원</strong>의 노쇼 손실을 방어할 수 있어요.
       </p>
     </header>
 
@@ -670,7 +587,7 @@
               <p class="guide-desc">샵 상황에 맞게 값을 조정하면<br>손실액이 바로 계산돼요.</p>
             </div>
           </div>
-        </div>
+          </div>
 
         <!-- 1. 한 달 총 예약 고객 수 -->
         <div class="slider-field">
@@ -702,48 +619,16 @@
           <div class="slider-meta"><span>0원</span><span>300,000원</span></div>
         </div>
 
-
-
-      </div>
-    </section>
-
-    <!-- Action Section -->
-    <section class="action-section">
-
-      <!-- 방어액 Highlight -->
-      <div class="defense-card" id="defense-card" role="status" aria-label="예약금을 통한 손실 방지액">
-        <div class="defense-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="m9 12 2 2 4-4"/>
-          </svg>
-        </div>
-        <div class="defense-body">
-          <span class="defense-eyebrow">예약금으로 매월 지킬 수 있어요</span>
-          <div class="defense-amount">
-            <span class="amount-value" id="h-saved">6,400,000</span><span class="amount-unit">원</span>
-          </div>
-          <span class="defense-formula">한 달 노쇼로 놓치는 <strong id="h-loss">8,000,000</strong>원의 80%</span>
-        </div>
-        <div class="defense-annual">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          1년이면 <strong id="h-annual">약 76,800,000원</strong>을 지킬 수 있어요
-        </div>
-
         <!-- 계산 과정 토글 -->
-        <button class="calc-toggle" id="calc-toggle-btn" aria-expanded="false" aria-controls="calc-detail" type="button">
-          <span id="calc-toggle-label">계산 과정 보기</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-        </button>
+        <div class="calc-section">
+          <button class="calc-toggle" id="calc-toggle-btn" aria-expanded="false" aria-controls="calc-detail" type="button">
+            <span id="calc-toggle-label">계산 과정</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
 
-        <div class="calc-detail" id="calc-detail" aria-hidden="true">
+          <div class="calc-detail" id="calc-detail" aria-hidden="true">
           <div class="result-row">
             <span class="result-index" aria-hidden="true">01</span>
             <span class="result-label">모든 고객 방문 시 매출</span>
@@ -763,22 +648,24 @@
             <span class="result-value negative" id="r-loss">8,000,000원</span>
           </div>
         </div>
-      </div>
+        </div><!-- /.calc-section -->
 
-      <!-- CTA -->
-      <div class="cta-row">
-        <button class="btn btn-cta" type="button">
-          지금 예약금 설정하기
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-          </svg>
-        </button>
-        <span class="cta-meta">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          설정은 3분이면 끝나요
-        </span>
+        <!-- CTA -->
+        <div class="cta-row">
+          <button class="btn btn-cta" type="button">
+            지금 예약금 설정하기
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+            </svg>
+          </button>
+          <span class="cta-meta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            설정은 3분이면 끝나요
+          </span>
+        </div>
+
       </div>
     </section>
 
@@ -831,14 +718,20 @@
       document.getElementById("r-actual").textContent = fmt(actualRevenue) + "원";
       document.getElementById("r-loss").textContent   = fmt(loss) + "원";
 
-      // 하이라이트 카드
-      document.getElementById("h-loss").textContent   = fmt(loss);
-      document.getElementById("h-saved").textContent  = fmt(saved);
-      document.getElementById("h-annual").textContent = "약 " + fmt(saved * 12) + "원";
-
-      // 히어로
-      document.getElementById("hero-amount").textContent = fmt(saved);
-      document.getElementById("hero-annual").textContent = "약 " + fmt(saved * 12) + "원";
+      // 히어로 & 마스크
+      const maskVals = {
+        "hero-amount": fmt(saved),
+        "hero-annual": "약 " + fmt(saved * 12) + "원",
+      };
+      if (!revealed) {
+        Object.entries(maskVals).forEach(([id, val]) => {
+          document.getElementById(id).dataset.pending = val;
+        });
+      } else {
+        Object.entries(maskVals).forEach(([id, val]) => {
+          document.getElementById(id).textContent = val;
+        });
+      }
 
       // 플로팅 바
       document.getElementById("float-amount").textContent = fmt(saved);
@@ -863,8 +756,80 @@
     }, { passive: true });
     updateFloatBar();
 
+    // ── 슬롯 릴 마스크 ──
+    let revealed = false;
+    const MASK_IDS = ["hero-amount", "hero-annual"];
+
+    function startReelMask(id, numCols, prefix, suffix) {
+      const el = document.getElementById(id);
+      el.classList.add("slot-q");
+
+      // 현재 폰트 크기 기준 문자 높이 측정
+      const probe = document.createElement("span");
+      probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;white-space:nowrap;";
+      probe.textContent = "0";
+      el.appendChild(probe);
+      const charH = Math.round(probe.getBoundingClientRect().height) || 36;
+      probe.remove();
+
+      el.innerHTML = "";
+      if (prefix) el.appendChild(document.createTextNode(prefix));
+
+      const ROUNDS = 5;
+      const digitRow = "0123456789".split("");
+      const inners = [];
+
+      for (let ci = 0; ci < numCols; ci++) {
+        const wrap = document.createElement("span");
+        wrap.style.cssText = `display:inline-block;overflow:hidden;height:${charH}px;vertical-align:top;`;
+
+        const inner = document.createElement("span");
+        const dur = 1800 + ci * 220;   // 왼쪽 릴부터 순서대로 멈춤
+        inner.style.cssText = `display:flex;flex-direction:column;will-change:transform;transition:transform ${dur}ms cubic-bezier(0.1,0,0,1);`;
+
+        // ROUNDS × 10자 + 최종 '?'
+        const chars = [...Array(ROUNDS).fill(digitRow).flat(), "?"];
+        chars.forEach(c => {
+          const ch = document.createElement("span");
+          ch.style.cssText = `display:block;height:${charH}px;line-height:${charH}px;text-align:center;`;
+          ch.textContent = c;
+          inner.appendChild(ch);
+        });
+
+        wrap.appendChild(inner);
+        el.appendChild(wrap);
+        inners.push({ inner, targetY: -(ROUNDS * 10) * charH });
+      }
+
+      if (suffix) el.appendChild(document.createTextNode(suffix));
+
+      // 초기 렌더 후 transition 발동 (double-rAF 패턴)
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        inners.forEach(({ inner, targetY }) => {
+          inner.style.transform = `translateY(${targetY}px)`;
+        });
+      }));
+    }
+
+    function initMask() {
+      startReelMask("hero-amount", 5, "", "");
+      startReelMask("hero-annual", 5, "약 ", "원");
+    }
+
+    function revealAll() {
+      if (revealed) return;
+      revealed = true;
+      MASK_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove("slot-q");
+        const val = el.dataset.pending;
+        if (val) el.textContent = val;
+      });
+    }
+
     [sTotal, sVisit, sPrice].forEach(s => s.addEventListener("input", recalc));
     recalc();
+    initMask();
 
     // 계산 과정 토글
     const calcToggleBtn = document.getElementById("calc-toggle-btn");
@@ -873,7 +838,7 @@
       const isOpen = calcDetail.classList.toggle("open");
       calcToggleBtn.setAttribute("aria-expanded", isOpen);
       calcDetail.setAttribute("aria-hidden", !isOpen);
-      document.getElementById("calc-toggle-label").textContent = isOpen ? "계산 과정 닫기" : "계산 과정 보기";
+      document.getElementById("calc-toggle-label").textContent = "계산 과정";
     });
 
     // 슬라이더 가이드 토스트
@@ -886,7 +851,10 @@
     document.getElementById("guide-close-btn").addEventListener("click", hideGuide);
 
     // 슬라이더를 처음 조작하면 자동으로 닫기
-    [sTotal, sVisit, sPrice].forEach(s => s.addEventListener("input", hideGuide, { once: true }));
+    [sTotal, sVisit, sPrice].forEach(s => s.addEventListener("input", () => {
+      hideGuide();
+      revealAll();
+    }, { once: true }));
   </script>
 </body>
 </html>
